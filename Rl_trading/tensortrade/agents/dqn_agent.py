@@ -20,6 +20,15 @@ import matplotlib.pyplot as plt
 
 DQNTransition = namedtuple('DQNTransition', ['state', 'action', 'reward', 'next_state', 'done'])
 
+def max_dropdown(series):
+    _acc = series.cumsum().tolist()
+    _max = -np.inf
+    max_dd = 0
+
+    for _val in _acc:
+        _max = max(_max, _val)
+        max_dd = max(max_dd, _max - _val)
+    return max_dd
 
 class DQNAgent(Agent):
 
@@ -120,18 +129,31 @@ class DQNAgent(Agent):
     def test(self,
              start_step: int = 0,
              n_steps: int = None):
-        state = self.env.reset()
-        while start_step > 0:
-            self.env.step([0])
-            start_step -= 1
-        for i in range(n_steps):
+        state = self.env.reset(stochastic_reset=False)
+        self.env.extract_obs(steps=start_step, return_obs=False)
+        for i in tqdm(range(n_steps)):
             action = self.get_action(state)
-            print("Action: ", action)
             next_state, reward, done, _ = self.env.step(action)
             if done:
+                print("Encounter terminal(done) state!!")
                 break
             else:
                 state = next_state
+
+        net_worth = self.env.portfolio.performance.net_worth.iloc[start_step:]
+        plt.title("Test Result")
+        net_worth.plot()
+        plt.show()
+
+        ret = net_worth.diff(-1) / net_worth
+        sharpe = np.sqrt(252) * ret.mean() / ret.std()
+        mdd = max_dropdown(ret)
+        cum_ret = ret.sum()
+
+        print("Annual Sharpe: {}".format(sharpe))
+        print("Maximum drop down: {}".format(mdd))
+        print("Cumulative return(single-rate): {}".format(cum_ret))
+        print("Cumulative return(compound-rate) : {}".format(net_worth.iloc[-1]/net_worth.iloc[0] - 1))
 
     def train(self,
               n_steps: int = None,

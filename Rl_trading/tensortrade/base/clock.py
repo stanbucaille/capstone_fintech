@@ -21,8 +21,8 @@ class Clock(object):
     def now_formatted(self) -> str:
         return self.now().strftime("%H:%M:%S")
 
-    def increment(self):
-        self._step += 1
+    def increment(self, step_size: int = 1):
+        self._step += step_size
 
     def reset(self):
         self._step = self._start

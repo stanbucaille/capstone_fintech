@@ -224,6 +224,7 @@ class TradingEnvironment(gym.Env, TimeIndexed):
     @property
     def stochastic_reset(self):
         return self._stochastic_reset
+
     @stochastic_reset.setter
     def stochastic_reset(self, x: bool):
         self._stochastic_reset = x
@@ -232,10 +233,9 @@ class TradingEnvironment(gym.Env, TimeIndexed):
         for _ in range(self.window_size):
             obs_row = self.extract_obs()
             self.history.push(obs_row)
-            
-    @property
+
     def is_done(self):
-        return (self.portfolio.profit_loss < 0.95) # or not self.feed.has_next()  # meet the end of the feed is not a kind of terminal, especially for trading activities which have no sense of ending unless exiting subjectively
+        return False # (self.portfolio.profit_loss < 0.95) # or not self.feed.has_next()  # meet the end of the feed is not a kind of terminal, especially for trading activities which have no sense of ending unless exiting subjectively
     
     def step(self, action) -> Tuple[np.array, float, bool, dict]:
         """Run one timestep within the environments based on the specified action.
@@ -259,7 +259,7 @@ class TradingEnvironment(gym.Env, TimeIndexed):
         self.history.push(obs_row)
         obs = self.history.observe()
 
-        done = self.is_done
+        done = self.is_done()
         
         reward = self.reward_scheme.get_reward(self.portfolio, done)
         
@@ -275,7 +275,7 @@ class TradingEnvironment(gym.Env, TimeIndexed):
             self.logger.debug('Performance: {}'.format(self._portfolio.performance.tail(1)))
 
         self.clock.increment()
-        
+
         return obs, reward, done, info
 
     def reset(self, stochastic_reset: bool = None) -> np.array:
@@ -298,7 +298,7 @@ class TradingEnvironment(gym.Env, TimeIndexed):
             stochastic_reset = self.stochastic_reset
         if stochastic_reset:
             random_start = np.random.randint(0, self.feed.max_len-self.window_size-self.max_episode_timesteps)
-            if random_start>0:
+            if random_start > 0:
                 self.extract_obs(steps=random_start, return_obs=False)
         
         self.portfolio.reset()

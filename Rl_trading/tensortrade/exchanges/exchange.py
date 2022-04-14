@@ -2,7 +2,7 @@ from typing import Callable, Union
 
 from tensortrade.base import Component, TimedIdentifiable
 from tensortrade.instruments import TradingPair
-from tensortrade.data import Module
+from tensortrade.data import Module, Stream
 from tensortrade.data import Forward
 
 
@@ -31,12 +31,14 @@ class Exchange(Module, Component, TimedIdentifiable):
     def __init__(self,
                  name: str,
                  service: Union[Callable, str],
-                 options: ExchangeOptions = None):
+                 options: ExchangeOptions = None,
+                 timestamps: list = None):
         super().__init__(name)
 
         self._service = service
         self._options = options if options else ExchangeOptions()
         self._prices = None
+        self._timestamps = timestamps
            
         #不知道为什么__init__用不了build
         #self.build()  ##不build不会产生任何_prices, order need this info to do transaction
@@ -53,8 +55,14 @@ class Exchange(Module, Component, TimedIdentifiable):
         for node in self.inputs:
             pair = "".join([c if (c.isalnum() or c == '.' or c == '_') else "/" for c in node.name])
             self._prices[pair] = Forward(node)
+
+        self._timestamps = Stream("timestamps", self._timestamps)
+        self(self._timestamps)
         self.built = True
-        
+
+    def quote_time(self):
+        return self._timestamps.value
+
     def quote_price(self, trading_pair: 'TradingPair') -> float:
         """The quote price of a trading pair on the exchange, denoted in the base instrument.
 

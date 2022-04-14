@@ -208,7 +208,7 @@ class Portfolio(Component, TimedIdentifiable, FeedListener):
         if not self._keys:
             self._keys = self.find_keys(data)  #find some keys of internal feed used to measure performance. can be modified later
 
-        index = pd.Index([self.clock.step], name="step")
+        index = pd.Index([self.exchanges[0].quote_time()], name="timestamp")
         performance_data = {k: data[k] for k in self._keys}
         performance_data['base_symbol'] = self.base_instrument.symbol
         performance_step = pd.DataFrame(performance_data, index=index)
