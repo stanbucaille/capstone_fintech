@@ -145,7 +145,7 @@ class DQNAgent(Agent):
         net_worth.plot()
         plt.show()
 
-        ret = net_worth.diff(-1) / net_worth
+        ret = - net_worth.diff(-1) / net_worth
         sharpe = np.sqrt(252) * ret.mean() / ret.std()
         mdd = max_dropdown(ret)
         cum_ret = ret.sum()
